@@ -6,7 +6,7 @@ const redis = new Redis(); // Create a Redis connection
 
 // IP-based rate limiting middleware
 function ipRateLimit(req, res, next) {
-  const maxRequests = 3; // Maximum allowed requests per IP
+  const maxRequests = 10; // Maximum allowed requests per IP
   const timeWindow = 60 * 1000; // Time window in milliseconds (e.g., 60 seconds)
 
   // Get the client's IP address
@@ -24,7 +24,7 @@ function ipRateLimit(req, res, next) {
 
     // If the request count doesn't exist or has expired, initialize it
     if (!requestCount) {
-      requestCount = 1;
+      requestCount = 10;
       redis.set(key, requestCount, 'PX', timeWindow);
     } else {
       // If the request count exists, increment it
@@ -44,7 +44,7 @@ function ipRateLimit(req, res, next) {
 
 // Endpoint-based rate limiting middleware
 function endpointRateLimit(req, res, next) {
-  const maxRequests = 5; // Maximum allowed requests per endpoint
+  const maxRequests = 100; // Maximum allowed requests per endpoint
   const timeWindow = 60 * 1000; // Time window in milliseconds (e.g., 60 seconds)
 
   // Get the endpoint URL
@@ -62,7 +62,7 @@ function endpointRateLimit(req, res, next) {
 
     // If the request count doesn't exist or has expired, initialize it
     if (!requestCount) {
-      requestCount = 1;
+      requestCount = 100;
       redis.set(key, requestCount, 'PX', timeWindow);
     } else {
       // If the request count exists, increment it
@@ -80,8 +80,12 @@ function endpointRateLimit(req, res, next) {
   });
 }
 
-// Apply IP-based rate limiting middleware to all routes
+// Apply IP-based rate limiting middleware to all routes => global  rate limiting
 app.use(ipRateLimit);
+
+app.get('/api/endpoint', endpointRateLimit, (req, res) => {
+  res.send('This is the protected endpoint.');
+})
 
 // Apply endpoint-based rate limiting middleware to specific routes
 app.get('/api/data', endpointRateLimit, (req, res) => {
