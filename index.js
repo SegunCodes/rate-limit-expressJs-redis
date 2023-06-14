@@ -26,6 +26,7 @@ function ipRateLimit(req, res, next) {
     if (!requestCount) {
       requestCount = 10;
       redis.set(key, requestCount, 'PX', timeWindow);
+      redis.expire(key, 120); // Set an expiration of 2 minutes (120 seconds)
     } else {
       // If the request count exists, increment it
       requestCount = parseInt(requestCount) + 1;
@@ -64,6 +65,7 @@ function endpointRateLimit(req, res, next) {
     if (!requestCount) {
       requestCount = 100;
       redis.set(key, requestCount, 'PX', timeWindow);
+      redis.expire(key, 120); // Set an expiration of 2 minutes (120 seconds)
     } else {
       // If the request count exists, increment it
       requestCount = parseInt(requestCount) + 1;
