@@ -24,13 +24,20 @@ function ipRateLimit(req, res, next) {
 
     // If the request count doesn't exist or has expired, initialize it
     if (!requestCount) {
-      requestCount = 10;
+      requestCount = 1;
       redis.set(key, requestCount, 'PX', timeWindow);
-      redis.expire(key, 120); // Set an expiration of 2 minutes (120 seconds)
     } else {
       // If the request count exists, increment it
       requestCount = parseInt(requestCount) + 1;
-      redis.set(key, requestCount);
+      // If the request count exists, increment it
+      requestCount = parseInt(requestCount) + 1;
+      if (requestCount <= maxRequests) {
+        redis.set(key, requestCount);
+      } else {
+        const expireTime = 120000; //2minutes
+        // Set expiration time to reset the request count
+        redis.set(key, requestCount, 'PX', expireTime);
+      }
     }
 
     // Check if the request count exceeds the maximum allowed requests
@@ -45,7 +52,7 @@ function ipRateLimit(req, res, next) {
 
 // Endpoint-based rate limiting middleware
 function endpointRateLimit(req, res, next) {
-  const maxRequests = 100; // Maximum allowed requests per endpoint
+  const maxRequests = 10; // Maximum allowed requests per endpoint
   const timeWindow = 60 * 1000; // Time window in milliseconds (e.g., 60 seconds)
 
   // Get the endpoint URL
@@ -63,13 +70,18 @@ function endpointRateLimit(req, res, next) {
 
     // If the request count doesn't exist or has expired, initialize it
     if (!requestCount) {
-      requestCount = 100;
+      requestCount = 1;
       redis.set(key, requestCount, 'PX', timeWindow);
-      redis.expire(key, 120); // Set an expiration of 2 minutes (120 seconds)
     } else {
       // If the request count exists, increment it
       requestCount = parseInt(requestCount) + 1;
-      redis.set(key, requestCount);
+      if (requestCount <= maxRequests) {
+        redis.set(key, requestCount);
+      } else {
+        const expireTime = 120000; //2minutes
+        // Set expiration time to reset the request count
+        redis.set(key, requestCount, 'PX', expireTime);
+      }
     }
 
     // Check if the request count exceeds the maximum allowed requests
